@@ -68,7 +68,7 @@ function ExtractMSYS2Package($file) {
 }
 
 # Download 7-Zip and extract 7z.exe for unpacking *.tar.xz archives.
-$pattern = @('[.*/^]7z[0-9]+\.exe$', '[.*/^]7z[0-9]+-x64\.exe$')[$is_64bit]
+$pattern = @('[.*/^]7z[0-9]+\.msi$', '[.*/^]7z[0-9]+-x64\.msi$')[$is_64bit]
 $release = GetLatestRelease 'sevenzip' '/7-Zip' $pattern
 $7zip = DownloadIfNotExists $release[0] ($PSScriptRoot + '\downloads\' + $release[1])
 if (!$7zip) {
@@ -76,12 +76,12 @@ if (!$7zip) {
     exit 1
 }
 
-# Wait until the 7-Zip installer has finished to extract the required files, copy them
+# Wait until the 7-Zip msi extraction has finished to extract the required files, copy them
 # and clean up afterwards.
-Start-Process -FilePath "$7zip" -ArgumentList /D="$PSScriptRoot\downloads\7z-tmp",/S -Wait
-Copy-Item "$PSScriptRoot\downloads\7z-tmp\7z.*" "$PSScriptRoot\downloads"
+Start-Process -FilePath "msiexec.exe" -ArgumentList /a,$7zip,/qb,TARGETDIR="$PSScriptRoot\downloads\7z-tmp" -Wait
+Copy-Item "$PSScriptRoot\downloads\7z-tmp\Files\7-Zip\7z.*" "$PSScriptRoot\downloads"
 
-& "$PSScriptRoot\downloads\7z-tmp\Uninstall.exe" /S
+Remove-Item "$PSScriptRoot\downloads\7z-tmp" -Recurse -Force
 
 # Download pacman and its dependencies (as determined by 'pactree -u pacman | sort').
 $packages = Get-Content "$PSScriptRoot\pacman-dependencies.txt"
